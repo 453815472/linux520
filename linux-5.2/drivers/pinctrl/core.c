@@ -227,7 +227,7 @@ static int pinctrl_register_one_pin(struct pinctrl_dev *pctldev,
 {
 	struct pin_desc *pindesc;
 
-	pindesc = pin_desc_get(pctldev, pin->number);
+	pindesc = pin_desc_get(pctldev, pin->number);	//检查第pin->number个引脚的pindesc是否已经存在了
 	if (pindesc) {
 		dev_err(pctldev->dev, "pin %d already registered\n",
 			pin->number);
@@ -253,7 +253,7 @@ static int pinctrl_register_one_pin(struct pinctrl_dev *pctldev,
 		pindesc->dynamic_name = true;
 	}
 
-	pindesc->drv_data = pin->drv_data;
+	pindesc->drv_data = pin->drv_data;		//pin->drv_data 没有被赋值，是NULL
 
 	radix_tree_insert(&pctldev->pin_desc_tree, pin->number, pindesc);
 	pr_debug("registered pin %d (%s) on %s\n",
@@ -1975,7 +1975,7 @@ pinctrl_init_controller(struct pinctrl_desc *pctldesc, struct device *dev,
 
 	/* Register all the pins */
 	dev_dbg(dev, "try to register %d pins ...\n",  pctldesc->npins);
-	ret = pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);
+	ret = pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);	//把每一个引脚的pinctrl_pin_desc都注册到pctldev->pin_desc_tree中
 	if (ret) {
 		dev_err(dev, "error during pin registration\n");
 		pinctrl_free_pindescs(pctldev, pctldesc->pins,

@@ -674,7 +674,7 @@ static struct samsung_pin_group *samsung_pinctrl_create_groups(
 	const struct pinctrl_pin_desc *pdesc;
 	int i;
 
-	groups = devm_kcalloc(dev, ctrldesc->npins, sizeof(*groups),
+	groups = devm_kcalloc(dev, ctrldesc->npins, sizeof(*groups),		//每个引脚都是一个group
 				GFP_KERNEL);
 	if (!groups)
 		return ERR_PTR(-EINVAL);
@@ -682,9 +682,9 @@ static struct samsung_pin_group *samsung_pinctrl_create_groups(
 
 	pdesc = ctrldesc->pins;
 	for (i = 0; i < ctrldesc->npins; ++i, ++pdesc, ++grp) {
-		grp->name = pdesc->name;
-		grp->pins = &pdesc->number;
-		grp->num_pins = 1;
+		grp->name = pdesc->name;		//引脚的名字。每一个pin的名字是由pin-bank的名字 + pin的序号组成的
+		grp->pins = &pdesc->number;		//引脚的编号。
+		grp->num_pins = 1;				//该group有多少个引脚
 	}
 
 	*cnt = ctrldesc->npins;
@@ -703,13 +703,13 @@ static int samsung_pinctrl_create_function(struct device *dev,
 	if (of_property_read_u32(func_np, "samsung,pin-function", &func->val))
 		return 0;
 
-	npins = of_property_count_strings(func_np, "samsung,pins");
+	npins = of_property_count_strings(func_np, "samsung,pins");	//有多少个引脚，组成该function
 	if (npins < 1) {
 		dev_err(dev, "invalid pin list in %pOFn node", func_np);
 		return -EINVAL;
 	}
 
-	func->name = func_np->full_name;
+	func->name = func_np->full_name;	//function的名字就是节点的名字
 
 	func->groups = devm_kcalloc(dev, npins, sizeof(char *), GFP_KERNEL);
 	if (!func->groups)
@@ -760,7 +760,7 @@ static struct samsung_pmx_func *samsung_pinctrl_create_functions(
 			continue;
 		}
 
-		for_each_child_of_node(cfg_np, func_np) {
+		for_each_child_of_node(cfg_np, func_np) {	//查找下一级子节点是否有"samsung,pin-function"
 			if (!of_find_property(func_np,
 			    "samsung,pin-function", NULL))
 				continue;
@@ -777,6 +777,7 @@ static struct samsung_pmx_func *samsung_pinctrl_create_functions(
 	/*
 	 * Iterate over all the child nodes of the pin controller node
 	 * and create pin groups and pin function lists.
+	 * 遍历pinctrl下的所有子节点，创建pin function	数组列表
 	 */
 	func_cnt = 0;
 	for_each_child_of_node(dev_np, cfg_np) {
@@ -794,7 +795,7 @@ static struct samsung_pmx_func *samsung_pinctrl_create_functions(
 			continue;
 		}
 
-		for_each_child_of_node(cfg_np, func_np) {
+		for_each_child_of_node(cfg_np, func_np) {	//查找下一级子节点是否有"samsung,pin-function"，创建functions并添加到pin function	数组列表
 			ret = samsung_pinctrl_create_function(dev, drvdata,
 						func_np, func);
 			if (ret < 0)
@@ -870,20 +871,21 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 
 	/* dynamically populate the pin number and pin name for pindesc */
 	for (pin = 0, pdesc = pindesc; pin < ctrldesc->npins; pin++, pdesc++)
-		pdesc->number = pin + drvdata->pin_base;
+		pdesc->number = pin + drvdata->pin_base;	//对每一个pin编号，全局唯一的编号
 
 	/*
 	 * allocate space for storing the dynamically generated names for all
 	 * the pins which belong to this pin-controller.
 	 */
 	pin_names = devm_kzalloc(&pdev->dev,
-				 array3_size(sizeof(char), PIN_NAME_LENGTH,
+				 array3_size(sizeof(char), PIN_NAME_LENGTH,		//array3_size()返回三维数组的字节数
 					     drvdata->nr_pins),
 				 GFP_KERNEL);
 	if (!pin_names)
 		return -ENOMEM;
 
 	/* for each pin, the name of the pin is pin-bank name + pin number */
+	/*每一个pin，pin的名字是由pin-bank的名字 + pin的序号组成的*/
 	for (bank = 0; bank < drvdata->nr_banks; bank++) {
 		pin_bank = &drvdata->pin_banks[bank];
 		for (pin = 0; pin < pin_bank->nr_pins; pin++) {
@@ -1022,9 +1024,9 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 	if (!d->pin_banks)
 		return ERR_PTR(-ENOMEM);
 
-	if (ctrl->nr_ext_resources + 1 > SAMSUNG_PINCTRL_NUM_RESOURCES)
+	if (ctrl->nr_ext_resources + 1 > SAMSUNG_PINCTRL_NUM_RESOURCES)	//ctrl->nr_ext_resources 没有初始化值，是0
 		return ERR_PTR(-EINVAL);
-
+	
 	for (i = 0; i < ctrl->nr_ext_resources + 1; i++) {
 		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
 		if (!res) {
@@ -1041,6 +1043,8 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 
 	bank = d->pin_banks;
 	bdata = ctrl->pin_banks;
+	
+	/*填充d->pin_banks，将s3c2416_pin_banks的内容填充到 d->pin_banks中,将不同型号芯片的ctrl内容赋值给核心结构体*/
 	for (i = 0; i < ctrl->nr_banks; ++i, ++bdata, ++bank) {
 		bank->type = bdata->type;
 		bank->pctl_offset = bdata->pctl_offset;
@@ -1054,10 +1058,10 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 		spin_lock_init(&bank->slock);
 		bank->drvdata = d;
 		bank->pin_base = d->nr_pins;
-		d->nr_pins += bank->nr_pins;
+		d->nr_pins += bank->nr_pins;	//每个bank中引脚数量累加，最终得到芯片的所有引脚个数
 
 		bank->eint_base = virt_base[0];
-		bank->pctl_base = virt_base[bdata->pctl_res_idx];
+		bank->pctl_base = virt_base[bdata->pctl_res_idx];	//bdata->pctl_res_idx 没有初始化值，是0
 	}
 	/*
 	 * Legacy platforms should provide only one resource with IO memory.
@@ -1072,13 +1076,13 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 		bank = d->pin_banks;
 		for (i = 0; i < d->nr_banks; ++i, ++bank) {
 			if (of_node_name_eq(np, bank->name)) {
-				bank->of_node = np;
+				bank->of_node = np;		//填充d->pin_banks，每一个pin banks的设备树节点of_node
 				break;
 			}
 		}
 	}
 
-	d->pin_base = pin_base;
+	d->pin_base = pin_base;				//pin_base 是static变量，初始值是0，所以 d->pin_base==0
 	pin_base += d->nr_pins;
 
 	return ctrl;
@@ -1096,7 +1100,7 @@ static int samsung_pinctrl_probe(struct platform_device *pdev)
 	if (!drvdata)
 		return -ENOMEM;
 
-	ctrl = samsung_pinctrl_get_soc_data(drvdata, pdev);
+	ctrl = samsung_pinctrl_get_soc_data(drvdata, pdev);	//填充 drvdata
 	if (IS_ERR(ctrl)) {
 		dev_err(&pdev->dev, "driver data not available\n");
 		return PTR_ERR(ctrl);
@@ -1107,7 +1111,7 @@ static int samsung_pinctrl_probe(struct platform_device *pdev)
 	if (res)
 		drvdata->irq = res->start;
 
-	if (ctrl->retention_data) {
+	if (ctrl->retention_data) {		//没有被赋值，是NULL
 		drvdata->retention_ctrl = ctrl->retention_data->init(drvdata,
 							  ctrl->retention_data);
 		if (IS_ERR(drvdata->retention_ctrl))
