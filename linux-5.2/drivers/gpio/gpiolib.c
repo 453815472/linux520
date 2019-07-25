@@ -252,21 +252,21 @@ static int gpiodev_add_to_list(struct gpio_device *gdev)
 		return 0;
 	}
 
-	next = list_entry(gpio_devices.next, struct gpio_device, list);
+	next = list_entry(gpio_devices.next, struct gpio_device, list);	//找到最小值
 	if (gdev->base + gdev->ngpio <= next->base) {
 		/* add before first entry */
-		list_add(&gdev->list, &gpio_devices);
+		list_add(&gdev->list, &gpio_devices);	//gdev->list添加到头结点gpio_devices后面
 		return 0;
 	}
 
-	prev = list_entry(gpio_devices.prev, struct gpio_device, list);
+	prev = list_entry(gpio_devices.prev, struct gpio_device, list);	//找到最大值
 	if (prev->base + prev->ngpio <= gdev->base) {
 		/* add behind last entry */
-		list_add_tail(&gdev->list, &gpio_devices);
+		list_add_tail(&gdev->list, &gpio_devices);	//gdev->list添加到头结点gpio_devices前面
 		return 0;
 	}
 
-	list_for_each_entry_safe(prev, next, &gpio_devices, list) {
+	list_for_each_entry_safe(prev, next, &gpio_devices, list) {	//如果gdev在最小值与最大值之间，就遍历并插入
 		/* at the end of the list */
 		if (&next->list == &gpio_devices)
 			break;
@@ -1264,6 +1264,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	 * First: allocate and populate the internal stat container, and
 	 * set up the struct device.
 	 */
+	 //// 每一个bank都都应一个唯一的gpio_device和gpio_chip
 	gdev = kzalloc(sizeof(*gdev), GFP_KERNEL);
 	if (!gdev)
 		return -ENOMEM;
@@ -1289,7 +1290,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 		goto err_free_gdev;
 	}
 	dev_set_name(&gdev->dev, "gpiochip%d", gdev->id);
-	device_initialize(&gdev->dev);
+	device_initialize(&gdev->dev);	//每一个gpio_device都对应一个device，一个bank，一个gpiochip
 	dev_set_drvdata(&gdev->dev, gdev);
 	if (chip->parent && chip->parent->driver)
 		gdev->owner = chip->parent->driver->owner;
@@ -1315,7 +1316,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 		chip_warn(chip, "line cnt %u is greater than fast path cnt %u\n",
 		chip->ngpio, FASTPATH_NGPIO);
 
-	gdev->label = kstrdup_const(chip->label ?: "unknown", GFP_KERNEL);
+	gdev->label = kstrdup_const(chip->label ?: "unknown", GFP_KERNEL);	//chip->label就是bank的名字
 	if (!gdev->label) {
 		status = -ENOMEM;
 		goto err_free_descs;
@@ -1350,7 +1351,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	}
 	gdev->base = base;
 
-	status = gpiodev_add_to_list(gdev);
+	status = gpiodev_add_to_list(gdev);	//gpiodev 添加到链表 并排序
 	if (status) {
 		spin_unlock_irqrestore(&gpio_lock, flags);
 		goto err_free_label;

@@ -1993,7 +1993,7 @@ out_err:
 
 static int pinctrl_claim_hogs(struct pinctrl_dev *pctldev)
 {
-	pctldev->p = create_pinctrl(pctldev->dev, pctldev);
+	pctldev->p = create_pinctrl(pctldev->dev, pctldev);	//由此可以看出，一个pctldev对应一个pinctrl结构体
 	if (PTR_ERR(pctldev->p) == -ENODEV) {
 		dev_dbg(pctldev->dev, "no hogs found\n");
 
@@ -2070,8 +2070,8 @@ struct pinctrl_dev *pinctrl_register(struct pinctrl_desc *pctldesc,
 {
 	struct pinctrl_dev *pctldev;
 	int error;
-
-	pctldev = pinctrl_init_controller(pctldesc, dev, driver_data);
+	
+	pctldev = pinctrl_init_controller(pctldesc, dev, driver_data);	/* init a pin controller device */
 	if (IS_ERR(pctldev))
 		return pctldev;
 

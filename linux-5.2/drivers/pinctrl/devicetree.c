@@ -120,7 +120,7 @@ static int dt_to_map_one_config(struct pinctrl *p,
 			return ret;
 		}
 		/* If we're creating a hog we can use the passed pctldev */
-		if (hog_pctldev && (np_pctldev == p->dev->of_node)) {
+		if (hog_pctldev && (np_pctldev == p->dev->of_node)) {	//p->dev->of_node 是pinctrl节点，那么这句话的意思就是说，如果pinctrl-%d后的节点是pinctrl节点，则pctldev = hog_pctldev;hog_pctldev实际就是pctldev
 			pctldev = hog_pctldev;
 			break;
 		}
@@ -149,7 +149,7 @@ static int dt_to_map_one_config(struct pinctrl *p,
 	if (ret < 0)
 		return ret;
 
-	/* Stash the mapping table chunk away for later use */
+	/* Stash the mapping table chunk away for later use (将映射表块存储起来供以后使用 )*/
 	return dt_remember_or_free_map(p, statename, pctldev, map, num_maps);
 }
 
@@ -181,7 +181,9 @@ bool pinctrl_dt_has_hogs(struct pinctrl_dev *pctldev)
 
 	return prop ? true : false;
 }
-
+/*pinctrl_dt_to_map函数是将pinctrl-%d对应的设备节点解析出来，
+并根据dts各驱动节点对pinctrl的引用关系，将phandle挂到各个驱动的device tree子节点，
+各个驱动就可以通过自己的dev句柄获得pinctrl的配置了。*/
 int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev)
 {
 	struct device_node *np = p->dev->of_node;
@@ -235,11 +237,11 @@ int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev)
 		}
 
 		/* For every referenced pin configuration node in it */
-		for (config = 0; config < size; config++) {
+		for (config = 0; config < size; config++) {		//pinctrl-%d=，可能有多个节点的情况，如：pinctrl-1 = <&cam_port_a_io &cam_port_a_clk_idle>;
 			phandle = be32_to_cpup(list++);
 
 			/* Look up the pin configuration node */
-			np_config = of_find_node_by_phandle(phandle);
+			np_config = of_find_node_by_phandle(phandle);	//重要的设备树api函数
 			if (!np_config) {
 				dev_err(p->dev,
 					"prop %s index %i invalid phandle\n",
@@ -248,7 +250,7 @@ int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev)
 				goto err;
 			}
 
-			/* Parse the node */
+			/* Parse the node （解析pinctrl-%d对应的节点)*/
 			ret = dt_to_map_one_config(p, pctldev, statename,
 						   np_config);
 			of_node_put(np_config);

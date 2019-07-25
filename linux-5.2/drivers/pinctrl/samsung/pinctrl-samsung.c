@@ -143,7 +143,7 @@ static int add_config(struct device *dev, unsigned long **configs,
 	unsigned old_num = *num_configs;
 	unsigned new_num = old_num + 1;
 	unsigned long *new_configs;
-
+	/*为 p(*configs)重新申请一段内存，再将p之前内存中的内容复制过来,返回新的内存地址new_configs.第二个参数是要申请的size*/
 	new_configs = krealloc(*configs, sizeof(*new_configs) * new_num,
 			       GFP_KERNEL);
 	if (!new_configs)
@@ -194,8 +194,8 @@ static int samsung_dt_subnode_to_map(struct samsung_pinctrl_drv_data *drvdata,
 	for (i = 0; i < ARRAY_SIZE(cfg_params); i++) {
 		ret = of_property_read_u32(np, cfg_params[i].property, &val);
 		if (!ret) {
-			config = PINCFG_PACK(cfg_params[i].param, val);
-			ret = add_config(dev, &configs, &num_configs, config);
+			config = PINCFG_PACK(cfg_params[i].param, val);			//将val和type组合成config变量值
+			ret = add_config(dev, &configs, &num_configs, config);	//把config值添加到configs指针指向的数组中
 			if (ret < 0)
 				goto exit;
 		/* EINVAL=missing, which is fine since it's optional */
@@ -210,7 +210,7 @@ static int samsung_dt_subnode_to_map(struct samsung_pinctrl_drv_data *drvdata,
 		reserve++;
 	if (num_configs)
 		reserve++;
-	ret = of_property_count_strings(np, "samsung,pins");
+	ret = of_property_count_strings(np, "samsung,pins");	//查找并返回多字符串属性中的字符串数
 	if (ret < 0) {
 		dev_err(dev, "could not parse property samsung,pins\n");
 		goto exit;
@@ -900,14 +900,14 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 	if (ret)
 		return ret;
 
-	drvdata->pctl_dev = devm_pinctrl_register(&pdev->dev, ctrldesc,
+	drvdata->pctl_dev = devm_pinctrl_register(&pdev->dev, ctrldesc,	//根据pinctrl_desc创建pinctrl_dev并通过devm_pinctrl_register把platform_device转换成pinctrl_dev
 						  drvdata);
 	if (IS_ERR(drvdata->pctl_dev)) {
 		dev_err(&pdev->dev, "could not register pinctrl driver\n");
 		return PTR_ERR(drvdata->pctl_dev);
 	}
 
-	for (bank = 0; bank < drvdata->nr_banks; ++bank) {
+	for (bank = 0; bank < drvdata->nr_banks; ++bank) {	//每一个bank都对应一个grange
 		pin_bank = &drvdata->pin_banks[bank];
 		pin_bank->grange.name = pin_bank->name;
 		pin_bank->grange.id = bank;
@@ -916,7 +916,7 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 		pin_bank->grange.base = pin_bank->grange.pin_base;
 		pin_bank->grange.npins = pin_bank->gpio_chip.ngpio;
 		pin_bank->grange.gc = &pin_bank->gpio_chip;
-		pinctrl_add_gpio_range(drvdata->pctl_dev, &pin_bank->grange);
+		pinctrl_add_gpio_range(drvdata->pctl_dev, &pin_bank->grange);	//将grange 添加到 drvdata->pctl_dev->gpio_ranges 链表中串起来
 	}
 
 	return 0;

@@ -284,7 +284,7 @@ struct samsung_pinctrl_drv_data {
 	struct samsung_pin_bank		*pin_banks;
 	unsigned int			nr_banks;
 	unsigned int			pin_base;
-	unsigned int			nr_pins;
+	unsigned int			nr_pins;	//芯片所有引脚的个数
 
 	struct samsung_retention_ctrl	*retention_ctrl;
 
