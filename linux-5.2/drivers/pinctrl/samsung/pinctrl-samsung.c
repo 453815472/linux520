@@ -74,13 +74,21 @@ static int samsung_get_group_pins(struct pinctrl_dev *pctldev,
 
 	return 0;
 }
-
+					
+/*
+ * reserve_map - 预先分配*num_maps + reserve个struct pinctrl_map结构体，一个引脚分配一个结构体
+ * @dev: 指定是为哪个Dev映射pinctrl_map的
+ * @map: 指针做输出，指向映射后的pinctrl_map结构体
+ * @reserved_maps: 指针做输出，指向映射后的pinctrl_map结构体的个数
+ * @num_maps: np_config节点下所有子节点的pinctrl_map结构体的个数累加
+ * @reserve: 为单个节点需要映射pinctrl_map结构体的个数
+ */
 static int reserve_map(struct device *dev, struct pinctrl_map **map,
 		       unsigned *reserved_maps, unsigned *num_maps,
 		       unsigned reserve)
 {
 	unsigned old_num = *reserved_maps;
-	unsigned new_num = *num_maps + reserve;
+	unsigned new_num = *num_maps + reserve;	//new_num的值为什么是这样计算的？答：num_maps其实就是已分配过的pinctrl_map结构体个数，reserve是现在需要分配的pinctrl_map结构体个数
 	struct pinctrl_map *new_map;
 
 	if (old_num >= new_num)
@@ -98,6 +106,10 @@ static int reserve_map(struct device *dev, struct pinctrl_map **map,
 	return 0;
 }
 
+/*
+ * @group,		指向引脚名，表示是哪个引脚，如："gph-0"
+ * @function,	指向节点名，表示用于哪个功能，如：uart0-data
+*/
 static int add_map_mux(struct pinctrl_map **map, unsigned *reserved_maps,
 		       unsigned *num_maps, const char *group,
 		       const char *function)
@@ -186,11 +198,13 @@ static int samsung_dt_subnode_to_map(struct samsung_pinctrl_drv_data *drvdata,
 	struct property *prop;
 	const char *group;
 	bool has_func = false;
-
+	
+	//例如np表示uart0-data节点，则samsung,pin-function = <2>
 	ret = of_property_read_u32(np, "samsung,pin-function", &val);
 	if (!ret)
-		has_func = true;
+		has_func = true;	//has_func =1
 
+	//uart0-data节点中，没有cfg_params中表示的属性
 	for (i = 0; i < ARRAY_SIZE(cfg_params); i++) {
 		ret = of_property_read_u32(np, cfg_params[i].property, &val);
 		if (!ret) {
@@ -205,23 +219,23 @@ static int samsung_dt_subnode_to_map(struct samsung_pinctrl_drv_data *drvdata,
 		}
 	}
 
-	reserve = 0;
+	reserve = 0;		//映射下一个节点时，reserve重置为0
 	if (has_func)
+		reserve++;		//reserve=1；
+	if (num_configs)	//num_configs=0
 		reserve++;
-	if (num_configs)
-		reserve++;
-	ret = of_property_count_strings(np, "samsung,pins");	//查找并返回多字符串属性中的字符串数
+	ret = of_property_count_strings(np, "samsung,pins");	//查找并返回多字符串属性中的字符串数,即有多少个gpio，如：samsung,pins = "gph-0", "gph-1";
 	if (ret < 0) {
 		dev_err(dev, "could not parse property samsung,pins\n");
 		goto exit;
 	}
 	reserve *= ret;
 
-	ret = reserve_map(dev, map, reserved_maps, num_maps, reserve);
+	ret = reserve_map(dev, map, reserved_maps, num_maps, reserve);	//先分配出map内存空间，下面立马就填充map
 	if (ret < 0)
 		goto exit;
 
-	of_property_for_each_string(np, "samsung,pins", prop, group) {
+	of_property_for_each_string(np, "samsung,pins", prop, group) {	//遍历samsung,pins= ， //根据每一个group依次填充map结构体。
 		if (has_func) {
 			ret = add_map_mux(map, reserved_maps,
 						num_maps, group, np->full_name);
@@ -244,7 +258,33 @@ exit:
 	kfree(configs);
 	return ret;
 }
-
+					 
+					 
+ /*samsung_dt_node_to_map - 为 np_config 节点中的每一个引脚（group）映射struct pinctrl_map结构体，然后填充它。
+ *
+ * @np_config：要建立映射的节点
+ * @map: 指针做输出，指向映射后的pinctrl_map结构体
+ * @num_maps: np_config节点下所有子节点的pinctrl_map结构体的个数累加
+ *
+ *
+ * 我们以串口为例：
+ * 
+ * uart0_data: uart0-data {
+ *   samsung,pins = "gph-0", "gph-1";
+ *   samsung,pin-function = <EXYNOS_PIN_FUNC_2>;
+ *  };
+ * 
+ * 
+ *  &uart_0 {
+ *   status = "okay";
+ *   pinctrl-names = "default";
+ *   pinctrl-0 = <&uart0_data>, <&uart0_fctl>;
+ *  };
+ * 
+ *  pinctrl会根据pinctrl-0找到uart0-data节点。
+ *  为uart0-data节点中的每一个引脚（group）映射struct pinctrl_map结构体，然后填充它。
+ * 
+ */
 static int samsung_dt_node_to_map(struct pinctrl_dev *pctldev,
 					struct device_node *np_config,
 					struct pinctrl_map **map,

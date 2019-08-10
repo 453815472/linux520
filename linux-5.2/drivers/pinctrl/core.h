@@ -76,10 +76,10 @@ struct pinctrl_dev {
  */
 struct pinctrl {				//用来将dev下不同pinctrl-state通过链表关联起来
 	struct list_head node;		//链表头，设备的pinctrl handle都挂接在这里
-	struct device *dev;			//这个设备
+	struct device *dev;			//哪个设备
 	struct list_head states;	//设备状态。如idle、sleep等等
 	struct pinctrl_state *state;//设备的当前状态
-	struct list_head dt_maps;	//map table，设备pin 的配置
+	struct list_head dt_maps;	//将 dev下的struct pinctrl_map 用该链表头串起来
 	struct kref users;
 };
 

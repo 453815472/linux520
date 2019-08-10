@@ -65,10 +65,10 @@ struct pinctrl_map_configs {
  * @data: Data specific to the mapping type
  */
 struct pinctrl_map {
-	const char *dev_name;
-	const char *name;
-	enum pinctrl_map_type type;
-	const char *ctrl_dev_name;
+	const char *dev_name;		//设备名。表明该pinctrl_map属于哪个dev的。
+	const char *name;			//pinctrl状态名。例如pinctrl-names = "default", "state_100mhz", "state_200mhz"; 是指3个名字中的一个
+	enum pinctrl_map_type type;	//pinctrl_map的类型
+	const char *ctrl_dev_name;	//pinctrl_dev 的设备名
 	union {
 		struct pinctrl_map_mux mux;
 		struct pinctrl_map_configs configs;

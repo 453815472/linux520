@@ -940,7 +940,7 @@ static int add_setting(struct pinctrl *p, struct pinctrl_dev *pctldev,
 	struct pinctrl_setting *setting;
 	int ret;
 
-	state = find_state(p, map->name);
+	state = find_state(p, map->name);	//起初pinctrl->status是空的，返回值为NULL
 	if (!state)
 		state = create_state(p, map->name);
 	if (IS_ERR(state))
@@ -1047,9 +1047,9 @@ static struct pinctrl *create_pinctrl(struct device *dev,
 
 	mutex_lock(&pinctrl_maps_mutex);
 	/* Iterate over the pin control maps to locate the right ones */
-	for_each_maps(maps_node, i, map) {
+	for_each_maps(maps_node, i, map) {			//遍历全局链表pinctrl_maps
 		/* Map must be for this device */
-		if (strcmp(map->dev_name, devname))
+		if (strcmp(map->dev_name, devname))		//必须是该device的map
 			continue;
 		/*
 		 * If pctldev is not null, we are claiming hog for it,
@@ -1059,7 +1059,7 @@ static struct pinctrl *create_pinctrl(struct device *dev,
 		 * by other device.
 		 */
 		if (pctldev &&
-		    strcmp(dev_name(pctldev->dev), map->ctrl_dev_name))
+		    strcmp(dev_name(pctldev->dev), map->ctrl_dev_name))	//必须是该pinctrl_dev的map
 			continue;
 
 		ret = add_setting(p, pctldev, map);
@@ -1362,11 +1362,11 @@ int pinctrl_register_map(const struct pinctrl_map *maps, unsigned num_maps,
 			 bool dup)
 {
 	int i, ret;
-	struct pinctrl_maps *maps_node;
+	struct pinctrl_maps *maps_node;	//pinctrl_maps的作用是将pinctrl_map + num_maps封装起来
 
 	pr_debug("add %u pinctrl maps\n", num_maps);
 
-	/* First sanity check the new mapping */
+	/* First sanity check the new mapping （首先检查新映射的健全性）*/
 	for (i = 0; i < num_maps; i++) {
 		if (!maps[i].dev_name) {
 			pr_err("failed to register map %s (%d): no device given\n",
@@ -1414,7 +1414,7 @@ int pinctrl_register_map(const struct pinctrl_map *maps, unsigned num_maps,
 
 	maps_node->num_maps = num_maps;
 	if (dup) {
-		maps_node->maps = kmemdup(maps, sizeof(*maps) * num_maps,
+		maps_node->maps = kmemdup(maps, sizeof(*maps) * num_maps,	//内存复制。即申请一块memory，并将原地址中的内容copy到新申请的memory中
 					  GFP_KERNEL);
 		if (!maps_node->maps) {
 			kfree(maps_node);
@@ -1425,7 +1425,7 @@ int pinctrl_register_map(const struct pinctrl_map *maps, unsigned num_maps,
 	}
 
 	mutex_lock(&pinctrl_maps_mutex);
-	list_add_tail(&maps_node->node, &pinctrl_maps);
+	list_add_tail(&maps_node->node, &pinctrl_maps);	//将每一个dev下的pinctrl_maps用一个全局的pinctrl_maps链表串起来
 	mutex_unlock(&pinctrl_maps_mutex);
 
 	return 0;

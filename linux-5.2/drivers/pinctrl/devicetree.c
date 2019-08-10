@@ -79,9 +79,9 @@ static int dt_remember_or_free_map(struct pinctrl *p, const char *statename,
 	dt_map->pctldev = pctldev;
 	dt_map->map = map;
 	dt_map->num_maps = num_maps;
-	list_add_tail(&dt_map->node, &p->dt_maps);
+	list_add_tail(&dt_map->node, &p->dt_maps);	//将 dev（即pinctrl）下的struct pinctrl_map 用链表串起来
 
-	return pinctrl_register_map(map, num_maps, false);
+	return pinctrl_register_map(map, num_maps, false);	//将dev下的pinctrl_map注册到全局链表中
 }
 
 struct pinctrl_dev *of_pinctrl_get(struct device_node *np)
@@ -225,7 +225,7 @@ int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev)
 
 		/* Determine whether pinctrl-names property names the state */
 		ret = of_property_read_string_index(np, "pinctrl-names",
-						    state, &statename);
+						    state, &statename);		//例如：pinctrl-names = "default", "state_100mhz", "state_200mhz";		//statename 就是其中一个名字
 		/*
 		 * If not, statename is just the integer state ID. But rather
 		 * than dynamically allocate it and have to free it later,
