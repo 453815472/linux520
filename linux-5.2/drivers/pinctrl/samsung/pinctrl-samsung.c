@@ -773,7 +773,10 @@ static int samsung_pinctrl_create_function(struct device *dev,
 	func->num_groups = npins;
 	return 1;
 }
-
+				
+/*pinctrl-dev下的带有samsung,pin-function的节点都可以用struct samsung_pmx_func来描述。
+ *samsung_pinctrl_create_functions - 将pinctrl-dev下所有带samsung,pin-function的节点用struct samsung_pmx_func来描述，并都存放入functions数组中。
+ */
 static struct samsung_pmx_func *samsung_pinctrl_create_functions(
 				struct device *dev,
 				struct samsung_pinctrl_drv_data *drvdata,

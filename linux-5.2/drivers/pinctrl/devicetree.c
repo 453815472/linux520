@@ -181,9 +181,9 @@ bool pinctrl_dt_has_hogs(struct pinctrl_dev *pctldev)
 
 	return prop ? true : false;
 }
-/*pinctrl_dt_to_map函数是将pinctrl-%d对应的设备节点解析出来，
-并根据dts各驱动节点对pinctrl的引用关系，将phandle挂到各个驱动的device tree子节点，
-各个驱动就可以通过自己的dev句柄获得pinctrl的配置了。*/
+/*pinctrl_dt_to_map函数是将dev(即pinctrl)下pinctrl-%d对应的设备节点解析出来，每一个引脚映射为struct pinctrl_map结构体
+ *
+ */
 int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev)
 {
 	struct device_node *np = p->dev->of_node;

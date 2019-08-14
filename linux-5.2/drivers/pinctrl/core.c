@@ -1049,7 +1049,7 @@ static struct pinctrl *create_pinctrl(struct device *dev,
 	/* Iterate over the pin control maps to locate the right ones */
 	for_each_maps(maps_node, i, map) {			//遍历全局链表pinctrl_maps
 		/* Map must be for this device */
-		if (strcmp(map->dev_name, devname))		//必须是该device的map
+		if (strcmp(map->dev_name, devname))		//必须是该device的map，才往下执行
 			continue;
 		/*
 		 * If pctldev is not null, we are claiming hog for it,
@@ -1059,7 +1059,7 @@ static struct pinctrl *create_pinctrl(struct device *dev,
 		 * by other device.
 		 */
 		if (pctldev &&
-		    strcmp(dev_name(pctldev->dev), map->ctrl_dev_name))	//必须是该pinctrl_dev的map
+		    strcmp(dev_name(pctldev->dev), map->ctrl_dev_name))	//必须是该pinctrl_dev的map，才往下执行
 			continue;
 
 		ret = add_setting(p, pctldev, map);
@@ -1974,8 +1974,11 @@ pinctrl_init_controller(struct pinctrl_desc *pctldesc, struct device *dev,
 	}
 
 	/* Register all the pins */
+	/*pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);会为pins数组中的每个pin分配独立的struct pin_desc，并进行赋值。
+	 *struct pin_desc是pinctrl子系统用来管理每个pin的最小单元
+	 */
 	dev_dbg(dev, "try to register %d pins ...\n",  pctldesc->npins);
-	ret = pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);	//把每一个引脚的pinctrl_pin_desc都注册到pctldev->pin_desc_tree中
+	ret = pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);	//把每一个引脚的pinctrl_pin_desc都注册到pctldev->pin_desc_tree 基数树中
 	if (ret) {
 		dev_err(dev, "error during pin registration\n");
 		pinctrl_free_pindescs(pctldev, pctldesc->pins,

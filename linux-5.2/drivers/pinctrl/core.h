@@ -100,10 +100,12 @@ struct pinctrl_state {
  * @group: the group selector to program
  * @func: the function selector to program
  */
+//unsigned若省略后一个关键字，大多数编译器都会认为是unsigned int。
 struct pinctrl_setting_mux {
-	unsigned group;
-	unsigned func;
+	 unsigned group;  //该引脚(group)在drvdata->pin_groups数组中的存储序号
+	 unsigned func;  //该功能(function)在drvdata->pmx_functions数组中的存储序号
 };
+
 
 /**
  * struct pinctrl_setting_configs - setting data for MAP_TYPE_CONFIGS_*
@@ -114,10 +116,11 @@ struct pinctrl_setting_mux {
  * @num_configs: the number of entries in array @configs
  */
 struct pinctrl_setting_configs {
-	unsigned group_or_pin;
-	unsigned long *configs;
-	unsigned num_configs;
+	 unsigned group_or_pin;  //分两种情况。1.如果setting->type = PIN_MAP_TYPE_CONFIGS_PIN，则表示该pin全局的唯一引脚编号，即在pctldev->desc->pins[i].number 中的序号值。2.如果setting->type = PIN_MAP_TYPE_CONFIGS_GROUP，则表示该引脚(group)在drvdata->pin_groups数组中的存储序号值。Samsung使用的是第二种情况
+	 unsigned long *configs;  //configs数组
+	 unsigned num_configs;	//config的个数
 };
+
 
 /**
  * struct pinctrl_setting - an individual mux or config setting

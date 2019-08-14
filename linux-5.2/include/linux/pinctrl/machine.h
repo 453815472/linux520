@@ -31,8 +31,8 @@ enum pinctrl_map_type {
  * @function: the mux function to select for the group
  */
 struct pinctrl_map_mux {
-	const char *group;
-	const char *function;
+	const char *group;			 //引脚名，表明是哪个引脚
+	const char *function;		 //功能名，表明是属于哪个function
 };
 
 /**
@@ -45,10 +45,11 @@ struct pinctrl_map_mux {
  * @num_configs: the number of entries in array @configs
  */
 struct pinctrl_map_configs {
-	const char *group_or_pin;
-	unsigned long *configs;
-	unsigned num_configs;
+	 const char *group_or_pin; //引脚名，表明是哪个引脚
+	 unsigned long *configs;  //configs数组
+	 unsigned num_configs;	//config的个数
 };
+
 
 /**
  * struct pinctrl_map - boards/machines shall provide this map for devices

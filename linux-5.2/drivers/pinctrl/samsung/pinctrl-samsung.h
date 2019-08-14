@@ -310,10 +310,10 @@ struct samsung_pinctrl_of_match_data {
  * @func: the function number to be programmed when selected.
  */
 struct samsung_pin_group {
-	const char		*name;
-	const unsigned int	*pins;
-	u8			num_pins;
-	u8			func;
+	const char		*name;		//name of the pin group
+	const unsigned int	*pins;	//the pins number ID included in this group.//在全局drv_data->pin_groups中的引脚编号
+	u8			num_pins;		//number of pins included in this group.
+	u8			func;			//the function number to be programmed when selected.
 };
 
 /**
@@ -322,12 +322,13 @@ struct samsung_pin_group {
  * @groups: one or more names of pin groups that provide this function.
  * @num_groups: number of groups included in @groups.
  */
-struct samsung_pmx_func {
-	const char		*name;
-	const char		**groups;
-	u8			num_groups;
-	u32			val;
+struct samsung_pmx_func {	//struct samsung_pmx_func *func
+	 const char  *name;			//func->name = func_np->full_name; //节点的名字
+	 const char  **groups;		//func->groups[i] = gname;	 //引脚的名字
+	 u8   num_groups;			//func->num_groups = npins;   //引脚的个数
+	 u32   val;    				//samsung,pin-function = <0x2>;
 };
+
 
 /* list of all exported SoC specific data */
 extern const struct samsung_pinctrl_of_match_data exynos3250_of_data;
