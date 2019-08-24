@@ -52,11 +52,11 @@ struct gpio_device {
 	struct module		*owner;
 	struct gpio_chip	*chip;
 	struct gpio_desc	*descs;
-	int			base;
-	u16			ngpio;
-	const char		*label;
-	void			*data;
-	struct list_head        list;
+	int			base;				//bank中pin脚编号的基数。gdev->base = gc->base = bank->grange.base;
+	u16			ngpio;				//bank中pin脚的个数。gdev->ngpio = gc->ngpio = bank->nr_pins;
+	const char		*label;			//bank的名字。gdev->label = gc->label = bank->name;
+	void			*data;			//私有数据。data为bank
+	struct list_head        list;	//作为链表节点，连接所有的gpio_devices
 
 #ifdef CONFIG_PINCTRL
 	/*
@@ -214,7 +214,7 @@ extern struct spinlock gpio_lock;
 extern struct list_head gpio_devices;
 
 struct gpio_desc {
-	struct gpio_device	*gdev;
+	struct gpio_device	*gdev;		//指明该gpio是属于哪个gpio_device
 	unsigned long		flags;
 /* flag symbols are bit numbers */
 #define FLAG_REQUESTED	0

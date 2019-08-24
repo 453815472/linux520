@@ -252,9 +252,9 @@ struct gpio_irq_chip {
  * is calculated by subtracting @base from the gpio number.
  */
 struct gpio_chip {
-	const char		*label;
+	const char		*label;				//bank的名字。gc->label = bank->name;
 	struct gpio_device	*gpiodev;
-	struct device		*parent;
+	struct device		*parent;		//父设备是platform dev。gc->parent = &pdev->dev;
 	struct module		*owner;
 
 	int			(*request)(struct gpio_chip *chip,
@@ -288,9 +288,9 @@ struct gpio_chip {
 
 	int			(*init_valid_mask)(struct gpio_chip *chip);
 
-	int			base;
-	u16			ngpio;
-	const char		*const *names;
+	int			base;					//bank中pin脚编号的基数。gc->base = bank->grange.base;
+	u16			ngpio;					//bank中pin脚的个数。gc->ngpio = bank->nr_pins;
+	const char		*const *names;		//字符指针数组。用来替换gpio_device下所有引脚(gpio_desc)的名称。
 	bool			can_sleep;
 
 #if IS_ENABLED(CONFIG_GPIO_GENERIC)
@@ -352,7 +352,7 @@ struct gpio_chip {
 	 *
 	 * Pointer to a device tree node representing this GPIO controller.
 	 */
-	struct device_node *of_node;
+	struct device_node *of_node;			//bank的设备树节点。gc->of_node = bank->of_node;
 
 	/**
 	 * @of_gpio_n_cells:

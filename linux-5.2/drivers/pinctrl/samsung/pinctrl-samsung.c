@@ -939,7 +939,7 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 		}
 	}
 
-	ret = samsung_pinctrl_parse_dt(pdev, drvdata);
+	ret = samsung_pinctrl_parse_dt(pdev, drvdata);	//解析出groups和functions
 	if (ret)
 		return ret;
 
@@ -1055,7 +1055,7 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 	void __iomem *virt_base[SAMSUNG_PINCTRL_NUM_RESOURCES];
 	unsigned int i;
 
-	ctrl = samsung_pinctrl_get_soc_data_for_of_alias(pdev);
+	ctrl = samsung_pinctrl_get_soc_data_for_of_alias(pdev);		//得到私有数据 pdev->dev->driver->of_match_table->data
 	if (!ctrl)
 		return ERR_PTR(-ENOENT);
 
@@ -1087,7 +1087,7 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 	bank = d->pin_banks;
 	bdata = ctrl->pin_banks;
 	
-	/*填充d->pin_banks，将s3c2416_pin_banks的内容填充到 d->pin_banks中,将不同型号芯片的ctrl内容赋值给核心结构体*/
+	/*填充d->pin_banks，将struct samsung_pin_bank_data s3c2416_pin_banks的内容填充到 d->pin_banks中,将不同型号芯片的ctrl内容赋值给核心结构体*/
 	for (i = 0; i < ctrl->nr_banks; ++i, ++bdata, ++bank) {
 		bank->type = bdata->type;
 		bank->pctl_offset = bdata->pctl_offset;
@@ -1114,12 +1114,12 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 	d->virt_base = virt_base[0];
 
 	for_each_child_of_node(node, np) {
-		if (!of_find_property(np, "gpio-controller", NULL))
+		if (!of_find_property(np, "gpio-controller", NULL))		//pinctrl dev下每一个带有“gpio-controller”属性的节点都属于一个bank
 			continue;
 		bank = d->pin_banks;
 		for (i = 0; i < d->nr_banks; ++i, ++bank) {
 			if (of_node_name_eq(np, bank->name)) {
-				bank->of_node = np;		//填充d->pin_banks，每一个pin banks的设备树节点of_node
+				bank->of_node = np;		//填充d->pin_banks，每一个 bank对应一个设备树节点of_node
 				break;
 			}
 		}
@@ -1143,7 +1143,7 @@ static int samsung_pinctrl_probe(struct platform_device *pdev)
 	if (!drvdata)
 		return -ENOMEM;
 
-	ctrl = samsung_pinctrl_get_soc_data(drvdata, pdev);	//填充 drvdata
+	ctrl = samsung_pinctrl_get_soc_data(drvdata, pdev);	//得到私有数据并填充 drvdata
 	if (IS_ERR(ctrl)) {
 		dev_err(&pdev->dev, "driver data not available\n");
 		return PTR_ERR(ctrl);

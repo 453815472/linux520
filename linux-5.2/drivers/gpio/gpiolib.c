@@ -252,17 +252,17 @@ static int gpiodev_add_to_list(struct gpio_device *gdev)
 		return 0;
 	}
 
-	next = list_entry(gpio_devices.next, struct gpio_device, list);	//找到最小值
-	if (gdev->base + gdev->ngpio <= next->base) {
+	next = list_entry(gpio_devices.next, struct gpio_device, list);	//找到链表头gpio_devices的首节点next，next是base值最小的。
+	if (gdev->base + gdev->ngpio <= next->base) {	//如果gdev比next的base值还小
 		/* add before first entry */
-		list_add(&gdev->list, &gpio_devices);	//gdev->list添加到头结点gpio_devices后面
+		list_add(&gdev->list, &gpio_devices);		//gdev添加到首节点next的前面，即头结点gpio_devices后面。
 		return 0;
 	}
 
-	prev = list_entry(gpio_devices.prev, struct gpio_device, list);	//找到最大值
-	if (prev->base + prev->ngpio <= gdev->base) {
+	prev = list_entry(gpio_devices.prev, struct gpio_device, list);	//找到base值最大的
+	if (prev->base + prev->ngpio <= gdev->base) {	//如果gdev比prev的base值还大
 		/* add behind last entry */
-		list_add_tail(&gdev->list, &gpio_devices);	//gdev->list添加到头结点gpio_devices前面
+		list_add_tail(&gdev->list, &gpio_devices);	//gdev添加到尾结点prev的后面，即头结点gpio_devices前面。
 		return 0;
 	}
 
@@ -325,15 +325,15 @@ static int gpiochip_set_desc_names(struct gpio_chip *gc)
 	struct gpio_device *gdev = gc->gpiodev;
 	int i;
 
-	if (!gc->names)
+	if (!gc->names)		//很显然gc->names是为空的，这里直接返回0
 		return 0;
 
-	/* First check all names if they are unique */
+	/* First check all names if they are unique (首先检查所有名称是否惟一)*/
 	for (i = 0; i != gc->ngpio; ++i) {
 		struct gpio_desc *gpio;
 
-		gpio = gpio_name_to_desc(gc->names[i]);
-		if (gpio)
+		gpio = gpio_name_to_desc(gc->names[i]);	//遍历所有的gpio_device下的所有引脚(gpio_desc)，找到与该名字相同的引脚(gpio_desc)
+		if (gpio)								//如果有与该名字相同的引脚(gpio_desc)，就打印出警告“检测到引脚名称冲突”
 			dev_warn(&gdev->dev,
 				 "Detected name collision for GPIO name '%s'\n",
 				 gc->names[i]);
@@ -341,12 +341,13 @@ static int gpiochip_set_desc_names(struct gpio_chip *gc)
 
 	/* Then add all names to the GPIO descriptors */
 	for (i = 0; i != gc->ngpio; ++i)
-		gdev->descs[i].name = gc->names[i];
+		gdev->descs[i].name = gc->names[i];		//给gpio_device下的所有引脚（gpio_desc)重新命名
 
 	return 0;
 }
 
-static unsigned long *gpiochip_allocate_mask(struct gpio_chip *chip)
+//gpiochip中每一个gpio都分配一个中断标志位，并初始化为1.
+static unsigned long *gpiochip_allocate_mask(struct gpio_chip *chip)	//gpio_chip下gpio个数值按4字节对齐，求字节数，并分配空间p，p中每一个bit表示该gpio_chip下一个gpio的中断标志位
 {
 	unsigned long *p;
 
@@ -1264,7 +1265,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	 * First: allocate and populate the internal stat container, and
 	 * set up the struct device.
 	 */
-	 //// 每一个bank都都应一个唯一的gpio_device和gpio_chip
+	 // 每一个bank都对应一个唯一的gpio_device和gpio_chip
 	gdev = kzalloc(sizeof(*gdev), GFP_KERNEL);
 	if (!gdev)
 		return -ENOMEM;
@@ -1283,14 +1284,14 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	else
 		chip->of_node = gdev->dev.of_node;
 #endif
-
-	gdev->id = ida_simple_get(&gpio_ida, 0, 0, GFP_KERNEL);
+	
+	gdev->id = ida_simple_get(&gpio_ida, 0, 0, GFP_KERNEL);	// 分配一个唯一的id，id值是从0开始累加的
 	if (gdev->id < 0) {
 		status = gdev->id;
 		goto err_free_gdev;
 	}
 	dev_set_name(&gdev->dev, "gpiochip%d", gdev->id);
-	device_initialize(&gdev->dev);	//每一个gpio_device都对应一个device，一个bank，一个gpiochip
+	device_initialize(&gdev->dev);	//每一个gpio_device都对应一个device，一个bank，一个gpiochip。说明一个gpiochip对应一个device
 	dev_set_drvdata(&gdev->dev, gdev);
 	if (chip->parent && chip->parent->driver)
 		gdev->owner = chip->parent->driver->owner;
@@ -1300,7 +1301,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	else
 		gdev->owner = THIS_MODULE;
 
-	gdev->descs = kcalloc(chip->ngpio, sizeof(gdev->descs[0]), GFP_KERNEL);
+	gdev->descs = kcalloc(chip->ngpio, sizeof(gdev->descs[0]), GFP_KERNEL);		//分配一个数组，装载一个bank下的所有struct gpio_desc(描述一个gpio)
 	if (!gdev->descs) {
 		status = -ENOMEM;
 		goto err_free_ida;
@@ -1351,7 +1352,7 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	}
 	gdev->base = base;
 
-	status = gpiodev_add_to_list(gdev);	//gpiodev 添加到链表 并排序
+	status = gpiodev_add_to_list(gdev);	//gpiodev 添加到全局链表gpio_devices并排序
 	if (status) {
 		spin_unlock_irqrestore(&gpio_lock, flags);
 		goto err_free_label;
@@ -1360,17 +1361,17 @@ int gpiochip_add_data_with_key(struct gpio_chip *chip, void *data,
 	spin_unlock_irqrestore(&gpio_lock, flags);
 
 	for (i = 0; i < chip->ngpio; i++)
-		gdev->descs[i].gdev = gdev;
+		gdev->descs[i].gdev = gdev;		//指明该gpio是属于哪个gpio_device
 
 #ifdef CONFIG_PINCTRL
 	INIT_LIST_HEAD(&gdev->pin_ranges);
 #endif
 
-	status = gpiochip_set_desc_names(chip);
+	status = gpiochip_set_desc_names(chip);	//如果chip->names存在的话，给gpio_device下每一个gpio（gpio_desc)重新命名
 	if (status)
 		goto err_remove_from_list;
 
-	status = gpiochip_irqchip_init_valid_mask(chip);
+	status = gpiochip_irqchip_init_valid_mask(chip);	//如果gpiochip->irq.need_valid_mask存在的话，gpiochip中每一个gpio都分配一个中断标志位，并初始化为1.
 	if (status)
 		goto err_remove_from_list;
 
@@ -1612,13 +1613,13 @@ static struct gpio_chip *find_chip_by_name(const char *name)
 /*
  * The following is irqchip helper code for gpiochips.
  */
-
+//如果gpiochip->irq.need_valid_mask存在的话，gpiochip中每一个gpio都分配一个中断标志位，并初始化为1.
 static int gpiochip_irqchip_init_valid_mask(struct gpio_chip *gpiochip)
 {
-	if (!gpiochip->irq.need_valid_mask)
+	if (!gpiochip->irq.need_valid_mask)	//need_valid_mask没有被赋值，是0，所以这里直接返回0了。
 		return 0;
 
-	gpiochip->irq.valid_mask = gpiochip_allocate_mask(gpiochip);
+	gpiochip->irq.valid_mask = gpiochip_allocate_mask(gpiochip);	//gpiochip中每一个gpio都分配一个中断标志位，并初始化为1.
 	if (!gpiochip->irq.valid_mask)
 		return -ENOMEM;
 
@@ -1919,7 +1920,7 @@ static int gpiochip_add_irqchip(struct gpio_chip *gpiochip,
 		return -EINVAL;
 	}
 
-	np = gpiochip->gpiodev->dev.of_node;
+	np = gpiochip->gpiodev->dev.of_node;	//bank节点
 	type = gpiochip->irq.default_type;
 
 	/*

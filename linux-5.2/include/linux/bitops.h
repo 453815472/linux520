@@ -6,7 +6,22 @@
 
 #define BITS_PER_TYPE(type) (sizeof(type) * BITS_PER_BYTE)
 #define BITS_TO_LONGS(nr)	DIV_ROUND_UP(nr, BITS_PER_TYPE(long))
+/*
+BITS_TO_LONGS(nr)
 
+求一个数nr是几个long的长度。
+
+例：sizeof(long) = 4;
+
+则
+
+BITS_TO_LONGS(31) = 1
+
+BITS_TO_LONGS(32) = 1
+
+BITS_TO_LONGS(33) = 2
+
+*/
 extern unsigned int __sw_hweight8(unsigned int w);
 extern unsigned int __sw_hweight16(unsigned int w);
 extern unsigned int __sw_hweight32(unsigned int w);
