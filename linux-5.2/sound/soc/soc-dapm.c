@@ -1374,7 +1374,7 @@ static int dapm_widget_power_check(struct snd_soc_dapm_widget *w)
 	if (w->force)
 		w->new_power = 1;
 	else
-		w->new_power = w->power_check(w);
+		w->new_power = w->power_check(w);	//检测该widget是否在一个complete path上，是则返回1，不是则返回0.
 
 	w->power_checked = true;
 
@@ -1382,6 +1382,7 @@ static int dapm_widget_power_check(struct snd_soc_dapm_widget *w)
 }
 
 /* Generic check to see if a widget should be powered. */
+//检测该widget是否在一个complete path上，是则返回1（即需要被上电，上电的意思就是操作设置对应的寄存器)，不是则返回0.
 static int dapm_generic_check_power(struct snd_soc_dapm_widget *w)
 {
 	int in, out;
